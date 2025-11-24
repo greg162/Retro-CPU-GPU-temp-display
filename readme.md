@@ -13,7 +13,7 @@ If you already own a soldering iron and some scraps of cable you cand build this
 
 ### Wiring Diagram
 
-![Wiring Diagram for the RPI Pico](media\Schematic_Retro-PC-Temp-Sensor_2025-11-23.svg "Wiring Diagram for the RPI Pico")
+![Wiring Diagram for the RPI Pico](media/schematic.svg "Wiring Diagram for the RPI Pico")
 
 ## Installation 
 
