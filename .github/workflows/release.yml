@@ -1,0 +1,74 @@
+name: Build and publish release
+
+# Fires when a version tag is pushed, e.g.
+#   git tag 1.1.0 && git push origin 1.1.0
+# Can also be run by hand from the Actions tab against any tag or branch.
+on:
+  push:
+    tags:
+      - '*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish self-contained single-file exe
+        run: >
+          dotnet publish TempSensorApp/TempSensorApp.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -o publish
+
+      # The Pico script ships alongside the exe so the download is everything a
+      # user needs. Copied from PicoDisplayApp so it can never drift out of date.
+      - name: Stage release files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path staging | Out-Null
+          Copy-Item publish/TempSensorApp.exe staging/
+          # Native helpers from System.IO.Ports. Single-file publish leaves these
+          # beside the exe, and the app will not start without them.
+          Copy-Item publish/*MonoPosixHelper.dll staging/
+          Copy-Item PicoDisplayApp/main.py staging/
+          Get-ChildItem staging | Format-Table Name, Length
+
+      - name: Create zip
+        shell: pwsh
+        run: Compress-Archive -Path staging/* -DestinationPath TempSensorApp-${{ github.ref_name }}.zip
+
+      # Manual runs (workflow_dispatch) stop here with the zip downloadable from
+      # the run summary, so you can test a build without creating a tag.
+      - name: Upload zip as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TempSensorApp-${{ github.ref_name }}
+          path: TempSensorApp-${{ github.ref_name }}.zip
+
+      - name: Attach zip to the GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $zip = "TempSensorApp-${{ github.ref_name }}.zip"
+          # Create the release if the tag doesn't have one yet, otherwise just
+          # upload to the existing one (--clobber replaces a same-named asset).
+          if (-not (gh release view ${{ github.ref_name }} 2>$null)) {
+            gh release create ${{ github.ref_name }} --title ${{ github.ref_name }} --generate-notes
+          }
+          gh release upload ${{ github.ref_name }} $zip --clobber

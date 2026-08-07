@@ -481,5 +481,8 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
-!release/
-!release/TempSensorApp.pdb
+# Build output is not committed. Published binaries are attached to GitHub
+# Releases by .github/workflows/release.yml instead. (publish/ and [Rr]elease/
+# are already covered above.)
+staging/
+*.zip

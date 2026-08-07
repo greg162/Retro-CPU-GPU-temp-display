@@ -17,15 +17,21 @@ If you already own a soldering iron and some scraps of cable you cand build this
 
 ## Installation 
 
+Grab the latest zip from the [Releases page](https://github.com/greg162/Retro-CPU-GPU-temp-display/releases)
+and unzip it somewhere on your PC. It contains `TempSensorApp.exe`, the two DLLs
+it needs, and `main.py` for the Pico.
+
   * Download the UF2 file for the Pico from here: https://www.raspberrypi.com/documentation/microcontrollers/micropython.html
   * Download and install Thonny: https://thonny.org/
   * Plug your RPI Pico into your PC while holding down the BOOTSEL button.
   * Copy the UF2 image into your PICO device in using file explorer (it should be called RPI-RP2).
       - After doing this the device will restart.
   * Start Thonny.
-     - Copy and paste script in PicoDisplayApp\main.py into the code editor.
+     - Copy and paste script in `main.py` into the code editor.
      - Press the save button, a prompt should pop up asking you where you want to save the file. Save it to the Pico using the name `main.py`
-  * Copy the project Temp Sensor App directory somewhere on to your PC.
   * Run the TempSensorApp.exe file.
+    - It runs as a system tray icon rather than a window. Right click it for the current readings.
     - If you've setup everything successfully, the you should see the temperatures pop up on each display.
+
+Building the exe yourself is covered in [TempSensorApp/readme.md](TempSensorApp/readme.md).
 
