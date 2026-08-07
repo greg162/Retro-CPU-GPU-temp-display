@@ -30,7 +30,17 @@ namespace TempMonitor
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new TempSensorApplicationContext());
+
+            // Startup failures happen in the context's constructor, before the message
+            // loop exists, so Application.Exit() cannot be used there. Check and bail out.
+            var context = new TempSensorApplicationContext();
+            if (context.StartupFailed)
+            {
+                context.Dispose();
+                return;
+            }
+
+            Application.Run(context);
         }
 
         /// <summary>
@@ -71,6 +81,13 @@ namespace TempMonitor
         private ToolStripMenuItem statusMenuItem = null!;
         private ToolStripMenuItem cpuMenuItem = null!;
         private ToolStripMenuItem gpuMenuItem = null!;
+
+        /// <summary>
+        /// True when startup could not complete (no Pico, or the serial port could not be
+        /// opened). <see cref="Program.Main"/> checks this and exits without running the
+        /// message loop.
+        /// </summary>
+        public bool StartupFailed { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TempSensorApplicationContext"/> class.
@@ -138,7 +155,8 @@ namespace TempMonitor
             {
                 statusMenuItem.Text = "Status: Pico not found!";
                 MessageBox.Show("Could not find Raspberry Pi Pico. Check connection.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Application.Exit();
+                StartupFailed = true;
+                return;
             }
 
             serialPort = new SerialPort(comPort, 115200);
@@ -153,11 +171,21 @@ namespace TempMonitor
                 monitorTimer.Tick += MonitorTimer_Tick;
                 monitorTimer.Start();
             }
+            catch (UnauthorizedAccessException)
+            {
+                // Almost always another instance of this app still holding the port.
+                statusMenuItem.Text = "Status: Port in use";
+                MessageBox.Show(
+                    $"{comPort} is already in use — most likely by another running copy of this app.\n\n" +
+                    "Close it (or run TempSensorApp.exe --kill) and try again.",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                StartupFailed = true;
+            }
             catch (Exception ex)
             {
                 statusMenuItem.Text = "Status: Connection failed";
                 MessageBox.Show($"Error opening serial port: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Application.Exit();
+                StartupFailed = true;
             }
         }
         
@@ -174,14 +202,18 @@ namespace TempMonitor
             // Update UI
             cpuMenuItem.Text = cpuTemp.HasValue ? $"CPU: {cpuTemp.Value:F1}°C" : "CPU: --.- °C";
             gpuMenuItem.Text = gpuTemp.HasValue ? $"GPU: {gpuTemp.Value:F1}°C" : "GPU: --.- °C";
-            notifyIcon.Text = $"CPU:{cpuTemp.Value:F1} | GPU:{gpuTemp.Value:F1}";
+            string cpuText = cpuTemp.HasValue ? $"{cpuTemp.Value:F1}" : "--.-";
+            string gpuText = gpuTemp.HasValue ? $"{gpuTemp.Value:F1}" : "--.-";
+            notifyIcon.Text = $"CPU:{cpuText} | GPU:{gpuText}";
 
-            // Send to Pico
-            if (cpuTemp.HasValue && gpuTemp.HasValue && serialPort != null && serialPort.IsOpen)
+            // Send to Pico every tick, even when a sensor is unavailable. The firmware
+            // treats 0.0 as "no reading" and shows dashes; staying silent instead would
+            // trip its 10-second timeout and put E-20 on both displays.
+            if (serialPort != null && serialPort.IsOpen)
             {
                 try
                 {
-                    string data = $"{cpuTemp.Value:F1},{gpuTemp.Value:F1}\n";
+                    string data = $"{cpuTemp ?? 0f:F1},{gpuTemp ?? 0f:F1}\n";
                     serialPort.Write(data);
                 }
                 catch (Exception)
@@ -215,12 +247,32 @@ namespace TempMonitor
         /// <param name="e">The event data.</param>
         private void OnExit(object? sender, EventArgs e)
         {
-            // Clean up resources
-            notifyIcon.Visible = false;
-            monitorTimer?.Stop();
-            serialPort?.Close();
-            computer.Close();
             Application.Exit();
+        }
+
+        /// <summary>
+        /// Releases the tray icon, timer, serial port and hardware monitor. Runs both on a
+        /// normal exit and when startup fails before the message loop starts.
+        /// </summary>
+        /// <param name="disposing">True when called from <see cref="IDisposable.Dispose"/>.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                monitorTimer?.Stop();
+                monitorTimer?.Dispose();
+                serialPort?.Close();
+                serialPort?.Dispose();
+                computer?.Close();
+
+                if (notifyIcon != null)
+                {
+                    notifyIcon.Visible = false;
+                    notifyIcon.Dispose();
+                }
+            }
+
+            base.Dispose(disposing);
         }
     }
 }
