@@ -34,18 +34,22 @@ jobs:
           -p:PublishSingleFile=true
           -o publish
 
-      # The Pico script ships alongside the exe so the download is everything a
-      # user needs. Copied from PicoDisplayApp so it can never drift out of date.
+      # The Pico script, wiring diagram and readme ship alongside the exe so the
+      # download is everything a user needs. main.py is copied from
+      # PicoDisplayApp so it can never drift out of date.
       - name: Stage release files
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Path staging | Out-Null
+          New-Item -ItemType Directory -Path staging/media | Out-Null
           Copy-Item publish/TempSensorApp.exe staging/
           # Native helpers from System.IO.Ports. Single-file publish leaves these
           # beside the exe, and the app will not start without them.
           Copy-Item publish/*MonoPosixHelper.dll staging/
           Copy-Item PicoDisplayApp/main.py staging/
-          Get-ChildItem staging | Format-Table Name, Length
+          Copy-Item readme.md staging/
+          # Kept under media/ because readme.md links the diagram relatively.
+          Copy-Item media/schematic.svg staging/media/
+          Get-ChildItem staging -Recurse | Format-Table FullName, Length
 
       - name: Create zip
         shell: pwsh

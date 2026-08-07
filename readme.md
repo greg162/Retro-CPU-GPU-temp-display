@@ -33,5 +33,5 @@ it needs, and `main.py` for the Pico.
     - It runs as a system tray icon rather than a window. Right click it for the current readings.
     - If you've setup everything successfully, the you should see the temperatures pop up on each display.
 
-Building the exe yourself is covered in [TempSensorApp/readme.md](TempSensorApp/readme.md).
+Building the exe yourself is covered in [TempSensorApp/readme.md](https://github.com/greg162/Retro-CPU-GPU-temp-display/blob/master/TempSensorApp/readme.md).
 
