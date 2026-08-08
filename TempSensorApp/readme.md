@@ -91,6 +91,30 @@ to a few MB:
 dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true
 ```
 
+## The tray icon
+
+`TrayIconRenderer.cs` draws the icon at runtime, reusing the same 7-segment bit
+patterns as `DIGITS` in `PicoDisplayApp/main.py` so the tray and the TM1637
+displays render a digit identically. Each redraw creates an unmanaged icon
+handle, so the renderer releases it and the app only redraws when the whole
+degrees change.
+
+`app.ico` — the `.exe` icon and the icon shown before the first reading — is
+generated from that same code. After changing colours or geometry, regenerate it:
+
+```powershell
+dotnet run --project tools/IconGen
+```
+
+That rewrites `TempSensorApp/app.ico` and `media/tray-icon-preview.png`, a
+magnified contact sheet showing what the readout actually looks like once
+squeezed into 16 px:
+
+![Tray icon at each heat band](../media/tray-icon-preview.png "Tray icon at each heat band")
+
+`tools/IconGen` is a dev-only tool. It links `TrayIconRenderer.cs` as source
+rather than referencing the app, and is not part of a release build.
+
 ## Cleaning
 
 ```powershell
@@ -101,7 +125,9 @@ Remove-Item -Recurse -Force bin, obj
 ## Running
 
 Launch `TempSensorApp.exe` — it has no console window, it appears as a tray
-icon. Right-click the icon for status, current readings and Exit.
+icon. The icon itself shows the CPU temperature as 7-segment digits, tinted
+green below 60 °C, amber to 79 °C and red at 80 °C and above. Right-click it for
+status, both readings and Exit.
 
   * **Run as Administrator.** LibreHardwareMonitor loads a kernel driver to read
     CPU sensors; without elevation CPU temperature comes back empty.

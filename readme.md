@@ -30,7 +30,8 @@ it needs, and `main.py` for the Pico.
      - Copy and paste script in `main.py` into the code editor.
      - Press the save button, a prompt should pop up asking you where you want to save the file. Save it to the Pico using the name `main.py`
   * Run the TempSensorApp.exe file.
-    - It runs as a system tray icon rather than a window. Right click it for the current readings.
+    - It runs as a system tray icon rather than a window. The icon shows the CPU
+      temperature and turns amber then red as things heat up. Right click it for both readings.
     - If you've setup everything successfully, the you should see the temperatures pop up on each display.
 
 Building the exe yourself is covered in [TempSensorApp/readme.md](https://github.com/greg162/Retro-CPU-GPU-temp-display/blob/master/TempSensorApp/readme.md).

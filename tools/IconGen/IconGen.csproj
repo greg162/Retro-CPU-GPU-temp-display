@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Dev-only tool. Regenerates TempSensorApp/app.ico from TrayIconRenderer so the .exe icon
+    can never drift from the icon the tray draws at runtime. Not part of a release build.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Linked as source rather than referenced, to avoid making the app depend on the tool. -->
+    <Compile Include="..\..\TempSensorApp\TrayIconRenderer.cs" />
+  </ItemGroup>
+
+</Project>
