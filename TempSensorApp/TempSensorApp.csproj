@@ -6,6 +6,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- Local-build default only. The release workflow overrides this with
+         -p:Version=<tag>, so a released exe always reports its tag. Keep it in
+         step with the newest released version in CHANGELOG.md. -->
+    <Version>2.0.0</Version>
     <!-- Generated from TrayIconRenderer; see TempSensorApp/readme.md to regenerate. -->
     <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>

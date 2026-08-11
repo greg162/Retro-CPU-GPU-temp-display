@@ -10,6 +10,10 @@ USB serial to a Raspberry Pi Pico, which drives two TM1637 4-digit 7-segment dis
   * `TempSensorApp/` — the Windows side, C# / WinForms, `net10.0-windows`.
   * `PicoDisplayApp/main.py` — the Pico firmware, MicroPython, deployed by pasting into Thonny.
   * `tools/IconGen/` — dev-only tool that regenerates `TempSensorApp/app.ico`.
+  * `case/` — STLs for the printable enclosure. Exported from Onshape *in metres*, so they
+    import into most slicers 1000x too small; the readme tells users to scale. Don't "fix"
+    them by rescaling without saying so — anyone who already printed a case is working off
+    the current files.
 
 `TempSensorApp.slnx` is empty — build the `.csproj` files directly, not the solution.
 
@@ -32,8 +36,21 @@ TempSensorApp.exe --kill
 
 There are no tests and no linter configured.
 
-Releases are cut by pushing a version tag (`git tag 1.1.0 && git push origin 1.1.0`),
+Releases are cut by pushing a version tag (`git tag 2.0.0 && git push origin 2.0.0`),
 which runs `.github/workflows/release.yml`. Build output is gitignored — never commit binaries.
+
+Two things must be updated *before* the tag is pushed, because the workflow reads both:
+
+  * `CHANGELOG.md` needs a `## [<version>]` section for the tag being built. That section is
+    lifted out and used verbatim as the GitHub release notes, so the heading format is load
+    bearing — the extraction matches on it. With no match the workflow logs a warning and falls
+    back to `--generate-notes`, which builds the notes out of raw commit subjects instead.
+  * `<Version>` in `TempSensorApp.csproj` should match the version being released. CI overrides
+    it with `-p:Version=<tag>` so a released exe always reports its own tag; the csproj value is
+    what local builds and manual runs fall back to.
+
+A `workflow_dispatch` run builds the zip and uploads it as a workflow artifact, but stops before
+creating or touching a release — use one to test a build without creating a tag.
 
 ## Running it for real
 

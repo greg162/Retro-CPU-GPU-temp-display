@@ -25,6 +25,23 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      # A tag build stamps the exe with the tag it is building, so a downloaded
+      # release always reports its own version in the file properties. Manual
+      # runs sit on a branch, where "master" is not a version — those fall back
+      # to the <Version> in the csproj instead.
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          $ref = "${{ github.ref_name }}"
+          if ($ref -match '^\d+\.\d+\.\d+$') {
+            "version_arg=-p:Version=$ref" >> $env:GITHUB_OUTPUT
+            Write-Host "Stamping build as $ref"
+          } else {
+            "version_arg=" >> $env:GITHUB_OUTPUT
+            Write-Host "Ref '$ref' is not a version tag; using <Version> from the csproj"
+          }
+
       - name: Publish self-contained single-file exe
         run: >
           dotnet publish TempSensorApp/TempSensorApp.csproj
@@ -32,6 +49,7 @@ jobs:
           -r win-x64
           --self-contained true
           -p:PublishSingleFile=true
+          ${{ steps.version.outputs.version_arg }}
           -o publish
 
       # The Pico script, wiring diagram and readme ship alongside the exe so the
@@ -63,6 +81,43 @@ jobs:
           name: TempSensorApp-${{ github.ref_name }}
           path: TempSensorApp-${{ github.ref_name }}.zip
 
+      # Release notes are the matching section of CHANGELOG.md, not the commit
+      # messages --generate-notes would otherwise use. Written after the zip is
+      # built so release-notes.md can never end up inside it.
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $lines = Get-Content CHANGELOG.md
+          # The section runs from its "## [<tag>]" heading to the next "## ".
+          $heading = $lines | Select-String -Pattern "^##\s+\[$([regex]::Escape($tag))\]" |
+                     Select-Object -First 1
+          if (-not $heading -or $heading.LineNumber -ge $lines.Count) {
+            Write-Host "::warning::No '## [$tag]' section in CHANGELOG.md; falling back to generated notes."
+            "found=false" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          # LineNumber is 1-based, so it indexes the first line *after* the heading.
+          $rest = $lines[$heading.LineNumber..($lines.Count - 1)]
+          $next = $rest | Select-String -Pattern '^##\s' | Select-Object -First 1
+          $body = if ($next -and $next.LineNumber -gt 1) { $rest[0..($next.LineNumber - 2)] }
+                  elseif ($next) { @() }
+                  else { $rest }
+          # The oldest section runs to end of file and would otherwise swallow
+          # the link definitions parked there.
+          $body = $body | Where-Object { $_ -notmatch '^\[.+\]:\s' }
+          $body = ($body -join "`n").Trim()
+          if (-not $body) {
+            Write-Host "::warning::'## [$tag]' section is empty; falling back to generated notes."
+            "found=false" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+          Set-Content -Path release-notes.md -Value $body
+          "found=true" >> $env:GITHUB_OUTPUT
+          Write-Host "--- release notes ---`n$body"
+
       - name: Attach zip to the GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
@@ -73,6 +128,11 @@ jobs:
           # Create the release if the tag doesn't have one yet, otherwise just
           # upload to the existing one (--clobber replaces a same-named asset).
           if (-not (gh release view ${{ github.ref_name }} 2>$null)) {
-            gh release create ${{ github.ref_name }} --title ${{ github.ref_name }} --generate-notes
+            $notes = if ("${{ steps.notes.outputs.found }}" -eq "true") {
+                       @('--notes-file', 'release-notes.md')
+                     } else {
+                       @('--generate-notes')
+                     }
+            gh release create ${{ github.ref_name }} --title ${{ github.ref_name }} @notes
           }
           gh release upload ${{ github.ref_name }} $zip --clobber
