@@ -1,19 +1,19 @@
 
 # RPI Pico PC Temperature Display
 
-This app can be used to display the temperature of your PCs CPU and GPU a couple of TM1637 displays and an RPI pico.
-If you already own a soldering iron and some scraps of cable you cand build this thing for around 15 bucks.
+This app can be used to display the temperature of your PC's CPU and GPU on a couple of TM1637 displays using an RPI pico.
+If you already own a soldering iron and some cables you can build this thing for around 15 bucks.
 
 ![The finished display showing 53 °C CPU and 51 °C GPU](media/IMG20260812220753.jpg "CPU on the top display, GPU on the bottom")
 
-The top display is the CPU, the bottom one is the GPU.
+The top displays the temperature of the CPU, the bottom one is the GPU.
 
 ## Pico Wiring Diagram
 
 ### Parts List
 
-  * HW069 / TM1637 4 digit 7 part display
-  * Rasberry Pi Pico
+  * HW069 / TM1637 4 digit 7 segment display
+  * Raspberry Pi Pico
 
 ### Wiring Diagram
 
@@ -35,7 +35,7 @@ cable; the standoffs on the base plate line the displays and the Pico up behind 
 the case will show up as a 0.06 mm speck. Scale it by 1000 (or set the import units to metres)
 and it will come out the right size. Both parts fit on any common printer bed once scaled.
 
-## Installation 
+## Installation
 
 Grab the latest zip from the [Releases page](https://github.com/greg162/Retro-CPU-GPU-temp-display/releases)
 and unzip it somewhere on your PC. It contains `TempSensorApp.exe`, the two DLLs
@@ -44,10 +44,10 @@ it needs, and `main.py` for the Pico.
   * Download the UF2 file for the Pico from here: https://www.raspberrypi.com/documentation/microcontrollers/micropython.html
   * Download and install Thonny: https://thonny.org/
   * Plug your RPI Pico into your PC while holding down the BOOTSEL button.
-  * Copy the UF2 image into your PICO device in using file explorer (it should be called RPI-RP2).
+  * Copy the UF2 image into your PICO device using file explorer (it should be called RPI-RP2).
       - After doing this the device will restart.
   * Start Thonny.
-     - Copy and paste script in `main.py` into the code editor.
+     - Copy and paste the script in `main.py` into the code editor.
      - Press the save button, a prompt should pop up asking you where you want to save the file. Save it to the Pico using the name `main.py`
   * Run the TempSensorApp.exe file. **Right click it and pick "Run as administrator".**
     - Without administrator rights the app cannot load the driver it uses to read the CPU,
@@ -55,7 +55,7 @@ it needs, and `main.py` for the Pico.
       seeing, this is almost always why.
     - It runs as a system tray icon rather than a window. The icon shows the CPU
       temperature and turns amber then red as things heat up. Right click it for both readings.
-    - If you've setup everything successfully, the you should see the temperatures pop up on each display.
+    - If you've set up everything successfully, you should see the temperatures pop up on each display.
 
 ## In action
 
