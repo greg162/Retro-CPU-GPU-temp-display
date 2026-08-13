@@ -4,6 +4,10 @@
 This app can be used to display the temperature of your PCs CPU and GPU a couple of TM1637 displays and an RPI pico.
 If you already own a soldering iron and some scraps of cable you cand build this thing for around 15 bucks.
 
+![The finished display showing 53 °C CPU and 51 °C GPU](media/IMG20260812220753.jpg "CPU on the top display, GPU on the bottom")
+
+The top display is the CPU, the bottom one is the GPU.
+
 ## Pico Wiring Diagram
 
 ### Parts List
@@ -21,6 +25,11 @@ STLs for a two part case live in [`case/`](case):
 
   * `main-housing.stl` — the shell the displays sit in. 60 × 56 × 22 mm.
   * `base-plate.stl` — the back that closes it up. 57.4 × 53.4 × 13.4 mm.
+
+![Render of the two case parts](media/Screenshot%202026-08-12%20221406.png "The housing and the base plate it sits on")
+
+The housing has the two display windows in the front and a cutout on the side for the USB
+cable; the standoffs on the base plate line the displays and the Pico up behind them.
 
 **These files are in metres, not millimetres.** Most slicers assume millimetres, so on import
 the case will show up as a 0.06 mm speck. Scale it by 1000 (or set the import units to metres)
@@ -47,6 +56,13 @@ it needs, and `main.py` for the Pico.
     - It runs as a system tray icon rather than a window. The icon shows the CPU
       temperature and turns amber then red as things heat up. Right click it for both readings.
     - If you've setup everything successfully, the you should see the temperatures pop up on each display.
+
+## In action
+
+Mine sits on the shelf above the motherboard with the USB lead run out to a header, so the
+readings are visible through the side panel.
+
+![The whole case interior with the display reading 70 °C CPU and 56 °C GPU](media/IMG20260812222106.jpg "Under load — the CPU has climbed to 70 °C")
 
 ## Starting it automatically
 
